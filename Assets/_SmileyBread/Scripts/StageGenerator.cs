@@ -10,7 +10,7 @@ namespace _SmileyBread
     public class StageSetting
     {
         public GameObject prefab = null;
-        [HideInInspector] public StageInfo stageInfo;
+        [HideInInspector] public Stage stageInfo;
         public float startTime = 0.0f;
         public float frequencyWeight = 1.0f;
 
@@ -24,7 +24,7 @@ namespace _SmileyBread
         {
             if (prefab == null)
                 return;
-            stageInfo = prefab.GetComponent<StageInfo>();
+            stageInfo = prefab.GetComponent<Stage>();
         }
     }
 
@@ -40,7 +40,7 @@ namespace _SmileyBread
         [SerializeField]
         public StageSettingsList stagesPool = new StageSettingsList();
 
-        private readonly List<StageInfo> stages = new List<StageInfo>();
+        private readonly List<Stage> stages = new List<Stage>();
 
         private float FirstRightBound => stages[0].transform.position.x + stages[0].rightBound;
         private float LastRightBound => stages.Last().transform.position.x + stages.Last().rightBound;
@@ -91,7 +91,7 @@ namespace _SmileyBread
             {
                 newStage.transform.position = new Vector3(LastRightBound, 0, 0) - stagesPool[i].stageInfo.offset;
             }
-            stages.Add(newStage.GetComponent<StageInfo>());
+            stages.Add(newStage.GetComponent<Stage>());
         }
 
         private int GetNextStageIndex()

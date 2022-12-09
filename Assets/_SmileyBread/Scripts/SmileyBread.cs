@@ -44,7 +44,7 @@ namespace _SmileyBread
 
         public bool alive = true;
 
-        [SerializeField] private TextMeshProUGUI lengthText;
+        [SerializeField] private TMP_Text lengthText;
 
 
         private void Start()

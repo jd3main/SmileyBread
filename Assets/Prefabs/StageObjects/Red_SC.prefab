@@ -78,7 +78,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &3500621313091931543
 MonoBehaviour:
@@ -313,7 +313,7 @@ MonoBehaviour:
   level: 6
   titleBackgroundColor: {r: 0.816, g: 0, b: 0, a: 1}
   userName: KONODIODA
-  content: (:D
+  content: "\u5FAE\u7B11\u9EB5\u5305\u5566~~~"
   titleBackground: {fileID: 3500621313307685108}
   contentBackground: {fileID: 3500621314907497751}
   userNameTextMesh: {fileID: 3500621313091931543}
@@ -507,7 +507,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &3500621314135710466
 MonoBehaviour:
@@ -680,7 +680,7 @@ MeshRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!114 &3500621314504778014
 MonoBehaviour:
@@ -730,7 +730,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 3.95
+  m_fontSize: 3.85
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -766,7 +766,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 1
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: -0.015175343, z: 0.015159607, w: 0.00069230795}
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   _SortingLayer: 0

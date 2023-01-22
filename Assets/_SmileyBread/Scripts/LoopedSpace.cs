@@ -2,14 +2,85 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using UnityExtensions;
 
 namespace _SmileyBread
 {
     // Manage child objects in a repeating space.
     // Children of children won't be modified directly.
-    [ExecuteInEditMode]
     public class LoopedSpace : MonoBehaviour
     {
+        private class Replica
+        {
+            public Dictionary<int, Transform> transforms;
+            public Transform root;
+            public Vector3 offset;
+
+            public Replica(Transform baseRoot, Vector3 offset, string name=null)
+            {
+                root = new GameObject().transform;
+                root.parent = baseRoot.parent;
+                if (name != "")
+                    root.name = name;
+
+                LoopedSpace dupLoopSpace = root.GetComponent<LoopedSpace>();
+                if (dupLoopSpace != null)
+                    DestroyImmediate(dupLoopSpace);
+
+                transforms = new Dictionary<int, Transform>();
+                Track(baseRoot.Children());
+
+                this.offset = offset;
+            }
+
+            public Transform GetCopyOf(Transform trans)
+            {
+                return GetCopyOf(trans.GetInstanceID());
+            }
+
+            public Transform GetCopyOf(int instanceID)
+            {
+                if (!transforms.ContainsKey(instanceID))
+                    return null;
+                return transforms[instanceID];
+            }
+
+            public void RemoveCopyOf(Transform transform)
+            {
+                int instanceID = transform.GetInstanceID();
+                if (HasCopy(instanceID))
+                {
+                    if (transforms[instanceID] != null)
+                        Destroy(transforms[instanceID]);
+                    transforms.Remove(instanceID);
+                }
+            }
+
+            public void Track(IEnumerable<Transform> baseTransforms)
+            {
+                foreach (var trans in baseTransforms)
+                {
+                    int instanceID = trans.GetInstanceID();
+                    if (!HasCopy(instanceID))
+                        MakeCopyOf(trans);
+                    transforms[instanceID].position = trans.position + offset;
+                    transforms[instanceID].rotation = trans.rotation;
+                    transforms[instanceID].localScale = trans.localScale;
+                }
+            }
+
+            public bool HasCopy(int instanceID)
+            {
+                return transforms.ContainsKey(instanceID);
+            }
+
+            private void MakeCopyOf(Transform transform)
+            {
+                int instanceID = transform.GetInstanceID();
+                transforms[instanceID] = Instantiate(transform, root);
+            }
+        }
+
         public Bounds bounds = new Bounds(Vector3.zero, Vector3.one * 10);
 
         // Determind how many copies should be generated to simulate the looping nature.
@@ -17,12 +88,9 @@ namespace _SmileyBread
         // For example, if nCopies.x = 2, then each object will have 5 copies, 2 at the right, 2 at the left, and the other is the original one.
         [SerializeField] private Vector3Int nCopies = new Vector3Int(1,1,0);
 
-
-        private Dictionary<Vector3Int, HashSet<Transform>> transforms;
-        private HashSet<Transform> mainTransforms => transforms[Vector3Int.zero];
-
-        // The second index should be instance ID of an object in main block
-        private Dictionary<Vector3Int, Dictionary<int, Transform>> copies;
+        private IEnumerable<Transform> lastTransforms = null;
+        
+        private Dictionary<Vector3Int,Replica> replicas;
 
         private void OnDrawGizmos()
         {
@@ -32,53 +100,68 @@ namespace _SmileyBread
 
         private void Start()
         {
-            MakeCopies();
+            InitReplicas();
+            lastTransforms = this.transform.Children();
         }
 
-        void Update()
+        void InitReplicas()
         {
-            int n = transform.childCount;
-            HashSet<Transform> newTransforms = new HashSet<Transform>(transform.Cast<Transform>());
+            replicas = new Dictionary<Vector3Int,Replica>();
 
-
-        }
-
-        void MakeCopies()
-        {
-            copies = new Dictionary<Vector3Int, Dictionary<int, Transform>>();
-
-            for (int xid = -nCopies.x; xid <= nCopies.x; xid++)
+            for (int ix = -nCopies.x; ix <= nCopies.x; ix++)
             {
-                for (int yid = -nCopies.y; yid <= nCopies.y; yid++)
+                for (int iy = -nCopies.y; iy <= nCopies.y; iy++)
                 {
-                    for (int zid = -nCopies.z; zid <= nCopies.z; zid++)
+                    for (int iz = -nCopies.z; iz <= nCopies.z; iz++)
                     {
-                        if (xid == 0 && yid == 0 && zid == 0)
+                        if (ix == 0 && iy == 0 && iz == 0)
                             continue;
-                        Vector3Int index = new Vector3Int(xid, yid, zid);
-                        Transform dupRoot = Instantiate(this.gameObject, this.transform.parent).transform;
-                        copies[index] = new Dictionary<int, Transform>();
-                        for (int i = 0; i < dupRoot.childCount; i++)
-                        {
-                            Transform mainTrans = transform.GetChild(i);
-                            Transform dupTrans = dupRoot.GetChild(i);
-                            copies[index][mainTrans.GetInstanceID()] = dupTrans;
-                        }
-                        transforms[index] = ChildrenAsSet(dupRoot);
+                        Vector3Int index = new Vector3Int(ix, iy, iz);
+                        Vector3 offset = Vector3.Scale(bounds.size, new Vector3(ix, iy, iz));
+                        replicas[index] = new Replica(this.transform, offset, index.ToString());
                     }
                 }
             }
         }
 
-        void UpdateTransforms()
+        void Update()
         {
-
+            Modular();
+            SyncTransforms();
         }
 
-
-        private void UpdateLoop()
+        public void SyncTransforms()
         {
-            foreach (Transform trans in mainTransforms)
+            // Remove destroyed transforms
+            foreach (var trans in lastTransforms)
+            {
+                if (trans == null)
+                {
+                    RemoveAllCopiesOf(trans);
+                }
+            }
+
+            // Add transforms
+            IEnumerable<Transform> newTransforms = this.transform.Children();
+            foreach (var replica in replicas.Values)
+            {
+                replica.Track(newTransforms);
+            }
+
+            lastTransforms = newTransforms;
+        }
+
+        private void RemoveAllCopiesOf(Transform trans)
+        {
+            foreach (var replica in replicas.Values)
+            {
+                replica.RemoveCopyOf(trans);
+            }
+        }
+
+        public void Modular()
+        {
+            foreach (Transform trans in transform.Children())
             {
                 if (!bounds.Contains(trans.position))
                 {
@@ -89,11 +172,6 @@ namespace _SmileyBread
                     trans.position = bounds.min + offset;
                 }
             }
-        }
-
-        private static HashSet<Transform> ChildrenAsSet(Transform trans)
-        {
-            return new HashSet<Transform>(trans.Cast<Transform>());
         }
     }
 }
